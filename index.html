@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛動物教室小幫手 - 低年級注音版</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入圓潤可愛的繁體中文字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- 引入 Tone.js 產生可愛音效（免外部音檔） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans TC', sans-serif;
+            background-color: #FFF9EB;
+            background-image: radial-gradient(#FDE68A 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+            color: #451A03;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 注音符號直排樣式 (台灣標準注音排版) */
+        ruby {
+            ruby-align: center;
+        }
+        rt {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 0.45em;
+            font-weight: 700;
+            color: #9A3412;
+            letter-spacing: 0px;
+        }
+
+        /* 睡覺呼吸動畫 */
+        @keyframes breathe {
+            0%, 100% { transform: scale(1) translateY(0px); }
+            50% { transform: scale(1.05) translateY(-4px); }
+        }
+        .animal-sleeping {
+            animation: breathe 3.2s ease-in-out infinite;
+        }
+
+        /* 漂浮 Zzz 動畫 */
+        @keyframes floatZzz {
+            0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translate(16px, -24px) scale(1.2); }
+        }
+        .zzz-1 { animation: floatZzz 2.6s infinite 0s; }
+        .zzz-2 { animation: floatZzz 2.6s infinite 0.8s; }
+        .zzz-3 { animation: floatZzz 2.6s infinite 1.6s; }
+
+        /* 嚇醒抖動動畫 */
+        @keyframes wakeShake {
+            0%, 100% { transform: rotate(0deg) scale(1.1); }
+            20% { transform: rotate(-12deg) scale(1.18); }
+            40% { transform: rotate(12deg) scale(1.18); }
+            60% { transform: rotate(-10deg) scale(1.15); }
+            80% { transform: rotate(10deg) scale(1.15); }
+        }
+        .animal-awake {
+            animation: wakeShake 0.45s ease-in-out infinite;
+        }
+
+        /* 卡片點擊彈跳 */
+        .cute-btn {
+            transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+        }
+        .cute-btn:active {
+            transform: scale(0.93);
+        }
+
+        /* 可愛捲軸 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #FEF3C7; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: #F59E0B; border-radius: 99px; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- ==================== 頂部可愛導覽列 ==================== -->
+    <header class="bg-gradient-to-r from-amber-400 via-orange-300 to-amber-400 border-b-2 border-amber-500/60 px-3 py-1.5 shadow-2xs shrink-0">
+        <div class="max-w-[1700px] mx-auto flex items-center justify-between gap-2">
+            <!-- 左側：班級標題（含注音） -->
+            <div class="flex items-center gap-2">
+                <div class="bg-white p-1 rounded-xl shadow-2xs border-2 border-amber-500 text-lg leading-none">
+                    🐻
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <h1 id="classTitleDisplay" onclick="openSettingsModal()" class="text-base sm:text-lg font-black text-amber-950 tracking-wide cursor-pointer hover:opacity-80 flex items-center gap-1.5">
+                        <span>快樂國小 一年甲班</span>
+                        <span class="text-[10px] bg-white/80 text-amber-900 px-1.5 py-0.5 rounded-full border border-amber-400 font-bold">改班名</span>
+                    </h1>
+                    <p id="dateDisplay" class="hidden sm:block text-amber-950/80 font-bold text-xs"></p>
+                </div>
+            </div>
+
+            <!-- 右側：功能按鈕 -->
+            <div class="flex items-center gap-1.5">
+                <!-- 雲端同步狀態徽章 -->
+                <div id="cloudSyncBadge" class="hidden sm:flex items-center gap-1 bg-white/85 text-amber-950 font-black px-2 py-1 rounded-xl border border-amber-500/60 text-[11px]" title="雲端同步狀態">
+                    <span id="cloudSyncDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span id="cloudSyncText">連線中...</span>
+                </div>
+                <button onclick="openExportModal()" class="cute-btn bg-emerald-100 hover:bg-emerald-200 text-emerald-950 font-black px-2.5 py-1 rounded-xl border-2 border-emerald-500 shadow-2xs flex items-center gap-1 text-xs cursor-pointer" title="匯出打卡與加分紀錄">
+                    <span>📤</span>
+                    <span>匯出</span>
+                </button>
+                <button onclick="openNamesModal()" class="cute-btn bg-white hover:bg-amber-50 text-amber-900 font-black px-2.5 py-1 rounded-xl border-2 border-amber-500 shadow-2xs flex items-center gap-1 text-xs cursor-pointer">
+                    <span>👶</span>
+                    <span>編輯名單</span>
+                </button>
+                <button onclick="openSettingsModal()" class="cute-btn bg-amber-900/10 hover:bg-amber-900/20 text-amber-950 font-black p-1.5 rounded-xl border border-amber-600/30 cursor-pointer" title="班級設定">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== 主畫面雙欄佈局（強制永遠左右並排、一屏零捲動） ==================== -->
+    <main class="flex-1 min-h-0 max-w-[1700px] w-full mx-auto p-2 grid grid-cols-12 gap-2">
+
+        <!-- ==================== 左欄 (佔 5 欄)：現在要做什麼 + 睡覺動物計時器 + 任務清單 ==================== -->
+        <div class="col-span-5 flex flex-col gap-2 min-h-0">
+
+            <!-- 1. 整合卡片：【現在要做的事】＋【睡覺動物安靜倒數計時器】 -->
+            <section id="timerCard" class="bg-white rounded-2xl border-3 border-sky-300 shadow-sm overflow-hidden transition-colors duration-300 shrink-0">
+                <!-- 計時器頂部列：切換小動物 -->
+                <div class="bg-sky-100/90 px-2.5 py-1 border-b border-sky-200 flex items-center justify-between">
+                    <div class="flex items-center gap-1 font-black text-sky-950 text-xs">
+                        <span>🤫</span>
+                        <span><ruby>安<rt>ㄢ</rt></ruby><ruby>靜<rt>ㄐㄧㄥˋ</rt></ruby><ruby>倒<rt>ㄉㄠˋ</rt></ruby><ruby>數<rt>ㄕㄨˇ</rt></ruby><ruby>計<rt>ㄐㄧˋ</rt></ruby><ruby>時<rt>ㄕˊ</rt></ruby></span>
+                    </div>
+                    <!-- 選擇睡覺的動物 -->
+                    <div class="flex items-center gap-0.5 bg-white/80 p-0.5 rounded-lg border border-sky-200">
+                        <button onclick="selectAnimal('bear')" id="animalBtn_bear" class="animal-select-btn px-1 rounded text-sm cursor-pointer" title="小熊">🐻</button>
+                        <button onclick="selectAnimal('cat')" id="animalBtn_cat" class="animal-select-btn px-1 rounded text-sm cursor-pointer" title="小貓">🐱</button>
+                        <button onclick="selectAnimal('bunny')" id="animalBtn_bunny" class="animal-select-btn px-1 rounded text-sm cursor-pointer" title="小兔">🐰</button>
+                    </div>
+                </div>
+
+                <!-- ★ 計時器正上方：現在要做的事情（大字注音看板） -->
+                <div class="bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-b border-amber-200 px-2 py-1 text-center">
+                    <div class="inline-flex items-center gap-1 bg-amber-500 text-white text-[10px] font-black px-2 py-0.2 rounded-full">
+                        <span>🎯 現在要做的事</span>
+                    </div>
+                    <div id="currentFocusTaskDisplay" class="text-base sm:text-lg font-black text-amber-950 tracking-wide leading-tight pt-0.5 flex items-center justify-center flex-wrap">
+                        <!-- 由 JS 自動顯示目前進行中的注音任務 -->
+                    </div>
+                </div>
+
+                <!-- 睡覺動物舞台區 -->
+                <div class="p-2 flex flex-col items-center">
+                    <!-- 動物狀態提示氣泡 -->
+                    <div id="animalSpeechBubble" class="mb-0.5 px-2.5 py-0.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-900 font-black text-[11px] text-center">
+                        小熊正在睡覺，請保持安靜喔！
+                    </div>
+
+                    <!-- 動物與倒數時間並排 -->
+                    <div class="flex items-center justify-center gap-3 my-0.5">
+                        <!-- 可愛動物舞台 -->
+                        <div class="relative flex items-center justify-center h-14 w-16">
+                            <div id="zzzContainer" class="absolute -top-1 right-0 font-black text-sky-500 select-none pointer-events-none">
+                                <span class="zzz-1 inline-block text-xs">Z</span>
+                                <span class="zzz-2 inline-block text-sm">z</span>
+                                <span class="zzz-3 inline-block text-base">z</span>
+                            </div>
+                            <div id="wakeAlertIcon" class="hidden absolute -top-2 right-0 text-xl animate-bounce">💢</div>
+
+                            <div id="animalAvatar" class="text-4xl sm:text-5xl animal-sleeping select-none cursor-pointer" onclick="triggerAnimalWakeUp()" title="點擊可模擬吵醒小動物">
+                                🐻
+                            </div>
+                        </div>
+
+                        <!-- 巨大倒數時間顯示 -->
+                        <div id="timerDisplay" class="text-3xl sm:text-4xl font-black tracking-wider text-sky-950 font-mono">
+                            05:00
+                        </div>
+                    </div>
+
+                    <!-- 快速設定時間按鈕：3、5、10、30 分鐘 -->
+                    <div class="flex flex-wrap justify-center gap-1 my-1">
+                        <button onclick="setTimerMinutes(3)" class="cute-btn bg-sky-100 hover:bg-sky-200 text-sky-900 font-black px-2 py-0.5 rounded-lg text-xs cursor-pointer">3分</button>
+                        <button onclick="setTimerMinutes(5)" class="cute-btn bg-sky-100 hover:bg-sky-200 text-sky-900 font-black px-2 py-0.5 rounded-lg text-xs cursor-pointer">5分</button>
+                        <button onclick="setTimerMinutes(10)" class="cute-btn bg-sky-100 hover:bg-sky-200 text-sky-900 font-black px-2 py-0.5 rounded-lg text-xs cursor-pointer">10分</button>
+                        <button onclick="setTimerMinutes(30)" class="cute-btn bg-sky-100 hover:bg-sky-200 text-sky-900 font-black px-2 py-0.5 rounded-lg text-xs cursor-pointer">30分</button>
+                    </div>
+
+                    <!-- 開始 / 暫停 / 重設 控制鈕 -->
+                    <div class="flex items-center gap-1.5 w-full max-w-[240px]">
+                        <button id="timerToggleBtn" onclick="toggleTimer()" class="cute-btn flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-1 px-2.5 rounded-xl shadow-2xs flex items-center justify-center gap-1 text-xs sm:text-sm cursor-pointer">
+                            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                            <span>開始計時</span>
+                        </button>
+                        <button onclick="resetTimer()" class="cute-btn bg-stone-200 hover:bg-stone-300 text-stone-700 font-black py-1 px-2.5 rounded-xl cursor-pointer" title="重新設定時間">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- 音量偵測與扣分控制面板 -->
+                    <div class="w-full mt-1.5 pt-1.5 border-t border-dashed border-sky-200">
+                        <div class="flex items-center justify-between gap-1 mb-1">
+                            <button id="micToggleBtn" onclick="toggleMicrophone()" class="cute-btn bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 font-black px-1.5 py-0.5 rounded-lg text-[11px] flex items-center gap-1 cursor-pointer">
+                                <i data-lucide="mic" class="w-3 h-3 text-rose-500"></i>
+                                <span id="micBtnText">麥克風偵測</span>
+                            </button>
+
+                            <button onclick="triggerAnimalWakeUp()" class="cute-btn bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 font-black px-1.5 py-0.5 rounded-lg text-[11px] cursor-pointer">
+                                📢 吵醒扣分！
+                            </button>
+                        </div>
+
+                        <!-- 即時音量條 -->
+                        <div class="bg-stone-100 rounded-full h-2 p-0.5 border border-stone-200 overflow-hidden relative">
+                            <div id="volumeBar" class="h-full rounded-full bg-emerald-400 transition-all duration-75" style="width: 5%;"></div>
+                            <div id="thresholdMarker" class="absolute top-0 bottom-0 w-0.5 bg-rose-600" style="left: 70%;" title="音量警戒線"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] font-bold text-stone-500 mt-0.5">
+                            <span>安靜區</span>
+                            <div class="flex items-center gap-1">
+                                <span>靈敏度：</span>
+                                <input type="range" id="sensitivitySlider" min="30" max="95" value="70" oninput="updateSensitivity(this.value)" class="w-12 accent-rose-500 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 今日任務清單（點選可切換到上方計時器） -->
+            <section class="flex-1 min-h-0 bg-white rounded-2xl border-3 border-amber-300 shadow-sm flex flex-col overflow-hidden">
+                <div class="bg-amber-100/90 px-2.5 py-1 border-b border-amber-200 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-1 font-black text-amber-950 text-xs">
+                        <span>📝</span>
+                        <span><ruby>今<rt>ㄐㄧㄣ</rt></ruby><ruby>日<rt>ㄖˋ</rt></ruby><ruby>任<rt>ㄖㄣˋ</rt></ruby><ruby>務<rt>ㄨˋ</rt></ruby><ruby>清<rt>ㄑㄧㄥ</rt></ruby><ruby>單<rt>ㄉㄢ</rt></ruby></span>
+                    </div>
+                    <span class="text-[10px] font-bold bg-white text-amber-800 px-1.5 py-0.2 rounded-full border border-amber-300">點選任務 ☝️</span>
+                </div>
+
+                <div class="p-2 flex-1 min-h-0 flex flex-col gap-1.5">
+                    <!-- 新增任務表單 -->
+                    <form onsubmit="handleAddTask(event)" class="flex gap-1 shrink-0">
+                        <input type="text" id="newTaskInput" placeholder="新增任務..."
+                            class="flex-1 min-w-0 bg-amber-50/60 border border-amber-300 focus:border-amber-500 rounded-lg px-2 py-1 text-xs font-bold outline-none">
+                        <button type="submit" class="cute-btn bg-amber-500 hover:bg-amber-600 text-white font-black px-2.5 py-1 rounded-lg shrink-0 text-xs cursor-pointer">
+                            新增
+                        </button>
+                    </form>
+
+                    <!-- 常用低年級任務快速加入 -->
+                    <div class="flex flex-wrap items-center gap-1 shrink-0">
+                        <button type="button" onclick="quickAddTask('交聯絡簿')" class="text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded cursor-pointer">+ 交聯絡簿</button>
+                        <button type="button" onclick="quickAddTask('喝水去廁所')" class="text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded cursor-pointer">+ 喝水去廁所</button>
+                        <button type="button" onclick="quickAddTask('整理書包')" class="text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded cursor-pointer">+ 整理書包</button>
+                        <button type="button" onclick="quickAddTask('安靜看書')" class="text-[10px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold px-1.5 py-0.5 rounded cursor-pointer">+ 安靜看書</button>
+                    </div>
+
+                    <!-- 任務清單容器 -->
+                    <div id="taskListContainer" class="flex-1 min-h-0 overflow-y-auto space-y-1 pr-0.5">
+                        <!-- 由 JS 動態渲染任務項目 -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== 右欄 (佔 7 欄)：小朋友姓名打卡單 ＆ 動物養成加分表 ==================== -->
+        <section class="col-span-7 bg-white rounded-2xl border-3 border-emerald-300 shadow-sm flex flex-col min-h-0 overflow-hidden">
+            <!-- 右欄頂部列：打卡統計與快速操作 -->
+            <div class="bg-emerald-100/90 px-3 py-1.5 border-b border-emerald-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">🌟</span>
+                    <h2 class="text-sm sm:text-base font-black text-emerald-950">
+                        <ruby>姓<rt>ㄒㄧㄥˋ</rt></ruby><ruby>名<rt>ㄇㄧㄥˊ</rt></ruby><ruby>打<rt>ㄉㄚˇ</rt></ruby><ruby>卡<rt>ㄎㄚˇ</rt></ruby>＆<ruby>動<rt>ㄉㄨㄥˋ</rt></ruby><ruby>物<rt>ㄨˋ</rt></ruby><ruby>養<rt>ㄧㄤˇ</rt></ruby><ruby>成<rt>ㄔㄥˊ</rt></ruby><ruby>加<rt>ㄐㄧㄚ</rt></ruby><ruby>分<rt>ㄈㄣ</rt></ruby>
+                    </h2>
+                    <span class="text-xs font-black bg-white text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                        全完成：<span id="checkedInCount">0</span> / <span id="totalStudentsCount">0</span>
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button onclick="batchAdjustPoints(1)" class="cute-btn bg-amber-400 hover:bg-amber-500 text-amber-950 font-black px-2.5 py-1 rounded-lg text-xs shadow-2xs cursor-pointer">
+                        ⭐ 全班 +1
+                    </button>
+                    <button onclick="resetAllCheckins()" class="cute-btn bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 font-black px-2.5 py-1 rounded-lg text-xs cursor-pointer">
+                        🔄 重設打卡
+                    </button>
+                </div>
+            </div>
+
+            <!-- 小朋友姓名卡片網格 -->
+            <div class="p-2 flex-1 min-h-0 overflow-y-auto">
+                <div id="studentsGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2">
+                    <!-- 由 JS 動態渲染小朋友卡片 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== 吵醒小動物警示視窗 ==================== -->
+    <div id="wakeUpModal" class="fixed inset-0 bg-rose-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-rose-500 shadow-2xl text-center">
+            <div id="modalAnimalEmoji" class="text-6xl mb-2 animal-awake inline-block">🐻</div>
+            <h3 class="text-2xl font-black text-rose-600 mb-1">
+                <ruby>噓<rt>ㄒㄩ</rt></ruby>！<ruby>太<rt>ㄊㄞˋ</rt></ruby><ruby>大<rt>ㄉㄚˋ</rt></ruby><ruby>聲<rt>ㄕㄥ</rt></ruby><ruby>囉<rt>˙ㄌㄨㄛ</rt></ruby>！
+            </h3>
+            <p class="text-stone-700 font-bold text-sm sm:text-base mb-5">
+                <ruby>小<rt>ㄒㄧㄠˇ</rt></ruby><ruby>動<rt>ㄉㄨㄥˋ</rt></ruby><ruby>物<rt>ㄨˋ</rt></ruby><ruby>被<rt>ㄅㄟˋ</rt></ruby><ruby>吵<rt>ㄔㄠˇ</rt></ruby><ruby>醒<rt>ㄒㄧㄥˇ</rt></ruby><ruby>了<rt>˙ㄌㄜ</rt></ruby>！<ruby>要<rt>ㄧㄠˋ</rt></ruby><ruby>全<rt>ㄑㄩㄢˊ</rt></ruby><ruby>班<rt>ㄅㄢ</rt></ruby><ruby>扣<rt>ㄎㄡˋ</rt></ruby> 1 <ruby>顆<rt>ㄎㄜ</rt></ruby><ruby>星<rt>ㄒㄧㄥ</rt></ruby><ruby>星<rt>ㄒㄧㄥ</rt></ruby><ruby>嗎<rt>˙ㄇㄚ</rt></ruby>？
+            </p>
+            <div class="flex gap-2.5">
+                <button onclick="dismissWakeUpModal()" class="cute-btn flex-1 bg-stone-200 hover:bg-stone-300 text-stone-800 font-black py-2.5 rounded-2xl text-sm cursor-pointer">
+                    先原諒大家
+                </button>
+                <button onclick="confirmWakeUpPenalty()" class="cute-btn flex-1 bg-rose-500 hover:bg-rose-600 text-white font-black py-2.5 rounded-2xl text-sm shadow-xs cursor-pointer">
+                    全班扣 1⭐
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 個人任務與動物養成視窗 ==================== -->
+    <div id="studentDetailModal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 border-4 border-emerald-400 shadow-2xl">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span id="detailPetAvatar" class="text-4xl">🥚</span>
+                    <div>
+                        <h3 id="detailStudentName" class="text-xl sm:text-2xl font-black text-stone-800">小朋友名字</h3>
+                        <p id="detailPetStageName" class="text-xs font-black text-amber-700 bg-amber-100 inline-block px-2 py-0.5 rounded-full">
+                            神秘小蛋蛋（Lv.1）
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="bg-amber-100 border-2 border-amber-300 px-3 py-1 rounded-2xl font-black text-amber-800 text-base flex items-center gap-1">
+                        <span>⭐</span>
+                        <span id="detailStudentPoints">0</span>
+                    </div>
+                    <button onclick="closeModal('studentDetailModal')" class="text-stone-400 hover:text-stone-600 p-1 cursor-pointer">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 動物養成進化路線展示 -->
+            <div class="bg-amber-50/90 border-2 border-amber-200 rounded-2xl p-3 mb-4">
+                <div id="detailPetTrack" class="flex items-center justify-between gap-1 text-xl sm:text-2xl mb-1.5">
+                    <!-- JS 動態渲染進化階段 -->
+                </div>
+                <p id="detailPetNextHint" class="text-xs font-bold text-amber-900 text-center">
+                    再集滿幾顆星星就會進化喔！
+                </p>
+            </div>
+
+            <!-- 個人任務清單（點選打勾自動加 1 分） -->
+            <div class="mb-2 flex items-center justify-between">
+                <span class="text-sm font-black text-stone-700">
+    <!-- ==================== 匯出功能視窗 ==================== -->
+    <div id="exportModal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-emerald-400 shadow-2xl">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-black text-emerald-950 flex items-center gap-2">
+                    <span>📤</span>
+                    <span><ruby>匯<rt>ㄏㄨㄟˋ</rt></ruby><ruby>出<rt>ㄔㄨ</rt></ruby><ruby>班<rt>ㄅㄢ</rt></ruby><ruby>級<rt>ㄐㄧˊ</rt></ruby><ruby>紀<rt>ㄐㄧˋ</rt></ruby><ruby>錄<rt>ㄌㄨˋ</rt></ruby></span>
+                </h3>
+                <button onclick="closeModal('exportModal')" class="text-stone-400 hover:text-stone-600 p-1 cursor-pointer">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="text-xs sm:text-sm text-stone-600 font-bold mb-4">
+                選擇您想匯出的格式，方便留存或用 Excel 開啟查看小朋友的任務完成與動物養成進度：
+            </p>
+            <div class="space-y-3">
+                <button onclick="exportToCsv()" class="cute-btn w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 px-4 rounded-2xl shadow-xs flex items-center justify-between cursor-pointer text-left">
+                    <div>
+                        <div class="text-sm sm:text-base">📊 匯出 Excel / CSV 報表</div>
+                        <div class="text-[11px] font-bold text-emerald-100">包含姓名、星星分數、養成階段、未完成任務與已完成任務</div>
+                    </div>
+                    <i data-lucide="download" class="w-5 h-5 shrink-0"></i>
+                </button>
+
+                <button onclick="exportToJson()" class="cute-btn w-full bg-amber-100 hover:bg-amber-200 text-amber-950 border-2 border-amber-300 font-black py-3 px-4 rounded-2xl flex items-center justify-between cursor-pointer text-left">
+                    <div>
+                        <div class="text-sm sm:text-base">💾 匯出完整設定備份 (JSON)</div>
+                        <div class="text-[11px] font-bold text-amber-800">完整保留班級名單、任務與分數，可帶到其他電腦匯入</div>
+                    </div>
+                    <i data-lucide="file-json" class="w-5 h-5 shrink-0"></i>
+                </button>
+
+                <button onclick="triggerJsonImportFile()" class="cute-btn w-full bg-violet-100 hover:bg-violet-200 text-violet-950 border-2 border-violet-400 font-black py-3 px-4 rounded-2xl flex items-center justify-between cursor-pointer text-left">
+                    <div>
+                        <div class="text-sm sm:text-base">📥 匯入其他電腦的備份檔 (JSON)</div>
+                        <div class="text-[11px] font-bold text-violet-800">選取先前匯出的 .json 檔，立即還原並同步所有資料</div>
+                    </div>
+                    <i data-lucide="upload" class="w-5 h-5 shrink-0"></i>
+                </button>
+                <input type="file" id="importJsonFileInput" accept=".json,application/json" onchange="handleImportJsonFile(event)" class="hidden">
+
+                <button onclick="copySummaryText()" class="cute-btn w-full bg-sky-100 hover:bg-sky-200 text-sky-950 border-2 border-sky-300 font-black py-3 px-4 rounded-2xl flex items-center justify-between cursor-pointer text-left">
+                    <div>
+                        <div class="text-sm sm:text-base">📋 複製文字摘要（可貼上 LINE）</div>
+                        <div class="text-[11px] font-bold text-sky-800">快速整理今日任務與每位小朋友的分數/尚未完成項目</div>
+                    </div>
+                    <i data-lucide="copy" class="w-5 h-5 shrink-0"></i>
+                </button>
+            </div>
+
+            <!-- 進階：直接貼上備份文字還原（備用方式） -->
+            <div class="mt-4 pt-3 border-t border-stone-200">
+                <label for="pasteBackupTextarea" class="block text-xs font-black text-stone-600 mb-1">
+                    或直接貼上備份 JSON 文字並還原：
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="pasteBackupTextarea" placeholder="貼上備份內容..."
+                        class="flex-1 min-w-0 border border-stone-300 focus:border-violet-500 rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none">
+                    <button type="button" onclick="handleImportFromText()" class="cute-btn bg-violet-600 hover:bg-violet-700 text-white font-black px-3 py-1.5 rounded-xl text-xs shrink-0 cursor-pointer">
+                        貼上還原
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 班級設定視窗 ==================== -->
+    <div id="settingsModal" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-amber-400 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-black text-amber-950">⚙️ 教室小幫手設定</h3>
+                <button onclick="closeModal('settingsModal')" class="text-stone-400 hover:text-stone-600 p-1 cursor-pointer">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-black text-stone-700 mb-1">班級名稱</label>
+                    <input type="text" id="settingClassInput" class="w-full border-2 border-amber-300 rounded-2xl px-4 py-2.5 font-bold outline-none">
+                </div>
+                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-2xl border border-amber-200">
+                    <span class="font-bold text-stone-800 text-sm">開啟可愛音效（打卡/加分/鬧鐘）</span>
+                    <input type="checkbox" id="settingSoundCheckbox" checked class="w-5 h-5 accent-amber-500 cursor-pointer">
+                </div>
+                <div class="pt-2 border-t border-stone-100 flex justify-between items-center">
+                    <button onclick="resetAllScores()" class="text-xs font-bold text-rose-600 hover:underline cursor-pointer">將全班分數歸零</button>
+                    <button onclick="restoreDemo()" class="text-xs font-bold text-stone-500 hover:underline cursor-pointer">恢復範例名單</button>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="closeModal('settingsModal')" class="px-4 py-2 rounded-xl font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">取消</button>
+                    <button onclick="saveSettings()" class="cute-btn px-5 py-2 rounded-xl font-black bg-amber-500 hover:bg-amber-600 text-white cursor-pointer">儲存設定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部可愛浮動通知 -->
+    <div id="toastBox" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2"></div>
+
+    <!-- ==================== Firebase 雲端即時同步模組 ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cute-classroom-helper';
+        let cloudDb = null;
+        let cloudDocRef = null;
+        let currentUser = null;
+        let isApplyingRemoteSnapshot = false;
+
+        function setSyncBadge(status, label) {
+            const dot = document.getElementById('cloudSyncDot');
+            const text = document.getElementById('cloudSyncText');
+            if (!dot || !text) return;
+            text.textContent = label;
+            if (status === 'synced') {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+            } else if (status === 'syncing') {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-stone-400';
+            }
+        }
+
+        // 供主程式呼叫的雲端存檔函式
+        window.pushCloudData = async function(dataObj) {
+            if (!currentUser || !cloudDocRef || isApplyingRemoteSnapshot) return;
+            try {
+                setSyncBadge('syncing', '同步中...');
+                await setDoc(cloudDocRef, {
+                    payload: JSON.stringify(dataObj),
+                    updatedAt: Date.now()
+                }, { merge: true });
+                setSyncBadge('synced', '雲端已同步');
+            } catch (err) {
+                console.error('雲端同步失敗:', err);
+                setSyncBadge('offline', '單機模式');
+            }
+        };
+
+        async function initCloudSync() {
+            if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                setSyncBadge('offline', '單機自動存檔');
+                return;
+            }
+
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                cloudDb = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+
+                if (!currentUser) {
+                    setSyncBadge('offline', '單機自動存檔');
+                    return;
+                }
+
+                // 依規範使用嚴格公開路徑，讓教室大屏與教師裝置共用同一個班級看板文件
+                cloudDocRef = doc(cloudDb, 'artifacts', appId, 'public', 'data', 'classroom_boards', 'main_board');
+                setSyncBadge('synced', '雲端已連線');
+
+                onSnapshot(cloudDocRef, (snap) => {
+                    if (!snap.exists()) {
+                        // 雲端尚無資料時，將目前資料寫入雲端
+                        window.pushCloudData(window.getAppDataForCloud());
+                        return;
+                    }
+                    const remoteData = snap.data();
+                    if (!remoteData || !remoteData.payload) return;
+
+                    try {
+                        const parsedPayload = JSON.parse(remoteData.payload);
+                        isApplyingRemoteSnapshot = true;
+                        window.applyRemoteCloudData(parsedPayload);
+                        setSyncBadge('synced', '雲端已同步');
+                    } catch (e) {
+                        console.error('解析雲端資料失敗:', e);
+                    } finally {
+                        isApplyingRemoteSnapshot = false;
+                    }
+                }, (error) => {
+                    console.error('雲端監聽發生錯誤:', error);
+                    setSyncBadge('offline', '單機自動存檔');
+                });
+            } catch (err) {
+                console.error('初始化雲端同步失敗:', err);
+                setSyncBadge('offline', '單機自動存檔');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCloudSync();
+        });
+    </script>
+
+    <script>
+        // ==================== 1. 低年級常用國字注音字典（自動標註注音） ====================
+        const ZHUYIN_DICT = {
+            '今': 'ㄐㄧㄣ', '日': 'ㄖˋ', '要': 'ㄧㄠˋ', '做': 'ㄗㄨㄛˋ', '的': 'ㄉㄜ˙', '事': 'ㄕˋ',
+            '交': 'ㄐㄧㄠ', '聯': 'ㄌㄧㄢˊ', '絡': 'ㄌㄨㄛˋ', '簿': 'ㄅㄨˋ', '訂': 'ㄉㄧㄥˋ', '正': 'ㄓㄥˋ',
+            '習': 'ㄒㄧˊ', '作': 'ㄗㄨㄛˋ', '喝': 'ㄏㄜ', '水': 'ㄕㄨㄟˇ', '去': 'ㄑㄩˋ', '廁': 'ㄘㄜˋ',
+            '所': 'ㄙㄨㄛˇ', '整': 'ㄓㄥˇ', '理': 'ㄌㄧˇ', '抽': 'ㄔㄡ', '屜': 'ㄊㄧˋ', '書': 'ㄕㄨ',
+            '包': 'ㄅㄠ', '安': 'ㄢ', '靜': 'ㄐㄧㄥˋ', '看': 'ㄎㄢˋ', '課': 'ㄎㄜˋ', '外': 'ㄨㄞˋ',
+            '國': 'ㄍㄨㄛˊ', '語': 'ㄩˇ', '數': 'ㄕㄨˋ', '學': 'ㄒㄩㄝˊ', '生': 'ㄕㄥ', '字': 'ㄗˋ',
+            '甲': 'ㄐㄧㄚˇ', '乙': 'ㄧˇ', '本': 'ㄅㄣˇ', '回': 'ㄏㄨㄟˊ', '條': 'ㄊㄧㄠˊ', '通': 'ㄊㄨㄥ',
+            '知': 'ㄓ', '單': 'ㄉㄢ', '掃': 'ㄙㄠˇ', '地': 'ㄉㄧˋ', '擦': 'ㄘㄚ', '黑': 'ㄏㄟ',
+            '板': 'ㄅㄢˇ', '桌': 'ㄓㄨㄛ', '椅': 'ㄧˇ', '排': 'ㄆㄞˊ', '隊': 'ㄉㄨㄟˋ', '吃': 'ㄔ',
+            '飯': 'ㄈㄢˋ', '午': 'ㄨˇ', '休': 'ㄒㄧㄡ', '睡': 'ㄕㄨㄟˋ', '覺': 'ㄐㄧㄠˋ', '收': 'ㄕㄡ',
+            '好': 'ㄏㄠˇ', '文': 'ㄨㄣˊ', '具': 'ㄐㄩˋ', '鉛': 'ㄑㄧㄢ', '筆': 'ㄅㄧˇ', '橡': 'ㄒㄧㄤˋ',
+            '皮': 'ㄆㄧˊ', '準': 'ㄓㄨㄣˇ', '備': 'ㄅㄟˋ', '上': 'ㄕㄤˋ', '下': 'ㄒㄧㄚˋ', '放': 'ㄈㄤˋ',
+            '畫': 'ㄏㄨㄚˋ', '圖': 'ㄊㄨˊ', '朗': 'ㄌㄤˇ', '讀': 'ㄉㄨˊ', '背': 'ㄅㄟˋ', '考': 'ㄎㄠˇ',
+            '試': 'ㄕˋ', '卷': 'ㄐㄩㄢˋ', '簽': 'ㄑㄧㄢ', '名': 'ㄇㄧㄥˊ', '帶': 'ㄉㄞˋ', '餐': 'ㄘㄢ',
+            '袋': 'ㄉㄞˋ', '刷': 'ㄕㄨㄚ', '牙': 'ㄧㄚˊ', '洗': 'ㄒㄧˇ', '手': 'ㄕㄡˇ', '完': 'ㄨㄢˊ',
+            '成': 'ㄔㄥˊ', '請': 'ㄑㄧㄥˇ', '打': 'ㄉㄚˇ', '卡': 'ㄎㄚˇ', '寫': 'ㄒㄧㄝˇ', '功': 'ㄍㄨㄥ'
+        };
+
+        // 將文字轉換為帶有 <ruby> 注音的 HTML
+        function toZhuyinHtml(text) {
+            return Array.from(text).map(char => {
+                if (ZHUYIN_DICT[char]) {
+                    return `<ruby>${char}<rt>${ZHUYIN_DICT[char]}</rt></ruby>`;
+                }
+                return escapeHtml(char);
+            }).join('');
+        }
+
+        // ==================== 2. 狀態管理與預設資料 ====================
+        const STORAGE_KEY = 'cute_low_grade_classroom_v1';
+
+        const ANIMALS = {
+            bear: { emoji: '🐻', name: '小熊' },
+            cat: { emoji: '🐱', name: '小貓' },
+            bunny: { emoji: '🐰', name: '小兔' }
+        };
+
+        // 動物養成進化路線表（依個人星星分數進化）
+        const PET_TRACKS = [
+            { name: '恐龍寶寶系', stages: ['🥚', '🐣', '🦖', '🦕', '🐉'] },
+            { name: '獨角獸系',   stages: ['🥚', '🐣', '🐴', '🦄', '🧚'] },
+            { name: '草原獅王系', stages: ['🥚', '🐣', '🐱', '🦁', '👑'] },
+            { name: '極地企鵝系', stages: ['🥚', '🐣', '🐥', '🐧', '🐳'] },
+            { name: '森林小狐系', stages: ['🥚', '🐣', '🐶', '🦊', '🐺'] },
+            { name: '海洋海龜系', stages: ['🥚', '🐣', '🐸', '🐢', '🐬'] }
+        ];
+
+        const STAGE_LABELS = [
+            { min: 0, label: '神秘小蛋蛋' },
+            { min: 2, label: '破殼小寶寶' },
+            { min: 5, label: '可愛成長期' },
+            { min: 8, label: '帥氣進階期' },
+            { min: 12, label: '👑 傳說守護神獸' }
+        ];
+
+        function getPetEvolutionInfo(student) {
+            const trackIdx = (student.petTrackIndex ?? 0) % PET_TRACKS.length;
+            const track = PET_TRACKS[trackIdx];
+            const pts = student.points || 0;
+
+            let level = 0;
+            if (pts >= 12) level = 4;
+            else if (pts >= 8) level = 3;
+            else if (pts >= 5) level = 2;
+            else if (pts >= 2) level = 1;
+            else level = 0;
+
+            const nextThresholds = [2, 5, 8, 12, null];
+            const nextPts = nextThresholds[level];
+
+            return {
+                track,
+                level,
+                emoji: track.stages[level],
+                stageLabel: STAGE_LABELS[level].label,
+                nextPts,
+                ptsNeeded: nextPts !== null ? Math.max(0, nextPts - pts) : 0
+            };
+        }
+
+        const DEFAULT_DATA = {
+            className: '快樂國小 一年甲班',
+            soundEnabled: true,
+            selectedAnimal: 'bear',
+            sensitivity: 70,
+            activeTaskId: 't1',
+            tasks: [
+                { id: 't1', text: '交聯絡簿和國語習作' },
+                { id: 't2', text: '喝水去廁所' },
+                { id: 't3', text: '安靜看課外書' }
+            ],
+            students: [
+                { id: 's1', name: '王小明', petTrackIndex: 0, completedTasks: ['t1', 't2', 't3'], points: 5 },
+                { id: 's2', name: '陳小美', petTrackIndex: 1, completedTasks: ['t1', 't2'], points: 2 },
+                { id: 's3', name: '林宇軒', petTrackIndex: 2, completedTasks: [], points: 0 },
+                { id: 's4', name: '張芷若', petTrackIndex: 3, completedTasks: ['t1', 't2', 't3'], points: 8 },
+                { id: 's5', name: '李承恩', petTrackIndex: 4, completedTasks: ['t1'], points: 1 },
+                { id: 's6', name: '黃品妍', petTrackIndex: 5, completedTasks: ['t1', 't2', 't3'], points: 12 },
+                { id: 's7', name: '吳宥廷', petTrackIndex: 0, completedTasks: [], points: 0 },
+                { id: 's8', name: '蔡語彤', petTrackIndex: 1, completedTasks: ['t1', 't2'], points: 3 },
+                { id: 's9', name: '許睿哲', petTrackIndex: 2, completedTasks: ['t1'], points: 1 },
+                { id: 's10', name: '鄭羽希', petTrackIndex: 3, completedTasks: ['t1', 't2', 't3'], points: 6 },
+                { id: 's11', name: '謝秉翰', petTrackIndex: 4, completedTasks: [], points: 0 },
+                { id: 's12', name: '郭子晴', petTrackIndex: 5, completedTasks: ['t1', 't2'], points: 4 }
+            ]
+        };
+
+        let appData = loadData();
+        let activeDetailStudentId = null;
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+                const parsed = JSON.parse(raw);
+                const merged = { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...parsed };
+                // 相容舊資料格式
+                merged.students = (merged.students || []).map((s, idx) => ({
+                    ...s,
+                    petTrackIndex: s.petTrackIndex ?? (idx % PET_TRACKS.length),
+                    completedTasks: Array.isArray(s.completedTasks) ? s.completedTasks : (s.checkedIn ? (merged.tasks || []).map(t => t.id) : [])
+                }));
+                return merged;
+            } catch (e) {
+                return JSON.parse(JSON.stringify(DEFAULT_DATA));
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                if (typeof window.pushCloudData === 'function') {
+                    window.pushCloudData(appData);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 供雲端同步模組取得目前資料與套用遠端更新
+        window.getAppDataForCloud = function() {
+            return appData;
+        };
+
+        window.applyRemoteCloudData = function(remoteObj) {
+            if (!remoteObj || typeof remoteObj !== 'object') return;
+            const currentJson = JSON.stringify(appData);
+            const nextJson = JSON.stringify(remoteObj);
+            if (currentJson === nextJson) return;
+
+            appData = {
+                ...JSON.parse(JSON.stringify(DEFAULT_DATA)),
+                ...remoteObj,
+                students: Array.isArray(remoteObj.students) ? remoteObj.students : appData.students,
+                tasks: Array.isArray(remoteObj.tasks) ? remoteObj.tasks : appData.tasks
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            renderHeader();
+            renderTasks();
+            renderStudents();
+            if (activeDetailStudentId) {
+                renderStudentDetailModal();
+            }
+        };
+
+        // ==================== 3. 可愛音效（Tone.js 免外部音檔） ====================
+        let synth = null;
+        function ensureAudio() {
+            if (!appData.soundEnabled) return null;
+            if (!synth && window.Tone) {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            }
+            if (window.Tone && Tone.context.state !== 'running') {
+                Tone.start().catch(() => {});
+            }
+            return synth;
+        }
+
+        function playDingSound() {
+            const s = ensureAudio();
+            if (!s) return;
+            try {
+                s.triggerAttackRelease(['C5', 'E5', 'G5'], '16n');
+            } catch (e) {}
+        }
+
+        function playStarSound() {
+            const s = ensureAudio();
+            if (!s) return;
+            try {
+                s.triggerAttackRelease(['G5', 'C6'], '16n');
+            } catch (e) {}
+        }
+
+        function playWakeAlertSound() {
+            const s = ensureAudio();
+            if (!s) return;
+            try {
+                s.triggerAttackRelease(['A3', 'G#3'], '8n');
+            } catch (e) {}
+        }
+
+        // ==================== 4. 睡覺動物與倒數計時器 ====================
+        let timerSeconds = 5 * 60;
+        let timerInterval = null;
+        let isTimerRunning = false;
+        let isAnimalAwake = false;
+
+        function selectAnimal(animalKey) {
+            if (!ANIMALS[animalKey]) return;
+            appData.selectedAnimal = animalKey;
+            isAnimalAwake = false;
+            saveData();
+            updateAnimalUI();
+        }
+
+        function updateAnimalUI() {
+            const animal = ANIMALS[appData.selectedAnimal] || ANIMALS.bear;
+            const avatarEl = document.getElementById('animalAvatar');
+            const bubbleEl = document.getElementById('animalSpeechBubble');
+            const zzzEl = document.getElementById('zzzContainer');
+            const alertIconEl = document.getElementById('wakeAlertIcon');
+            const modalEmojiEl = document.getElementById('modalAnimalEmoji');
+
+            document.querySelectorAll('.animal-select-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-200', 'ring-2', 'ring-amber-500');
+            });
+            const activeBtn = document.getElementById(`animalBtn_${appData.selectedAnimal}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-amber-200', 'ring-2', 'ring-amber-500');
+            }
+
+            if (avatarEl) avatarEl.textContent = animal.emoji;
+            if (modalEmojiEl) modalEmojiEl.textContent = animal.emoji;
+
+            if (isAnimalAwake) {
+                if (avatarEl) {
+                    avatarEl.classList.remove('animal-sleeping');
+                    avatarEl.classList.add('animal-awake');
+                }
+                if (zzzEl) zzzEl.classList.add('hidden');
+                if (alertIconEl) alertIconEl.classList.remove('hidden');
+                if (bubbleEl) {
+                    bubbleEl.textContent = `噓！${animal.name}被吵醒了！`;
+                    bubbleEl.className = 'mb-0.5 px-2.5 py-0.5 rounded-lg bg-rose-100 border border-rose-300 text-rose-800 font-black text-[11px] text-center';
+                }
+            } else {
+                if (avatarEl) {
+                    avatarEl.classList.remove('animal-awake');
+                    avatarEl.classList.add('animal-sleeping');
+                }
+                if (zzzEl) zzzEl.classList.remove('hidden');
+                if (alertIconEl) alertIconEl.classList.add('hidden');
+                if (bubbleEl) {
+                    bubbleEl.textContent = `${animal.name}正在睡覺，請保持安靜喔！`;
+                    bubbleEl.className = 'mb-0.5 px-2.5 py-0.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-900 font-black text-[11px] text-center';
+                }
+            }
+
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            const display = document.getElementById('timerDisplay');
+            if (display) {
+                display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }
+
+        function setTimerMinutes(minutes) {
+            pauseTimer();
+            timerSeconds = minutes * 60;
+            isAnimalAwake = false;
+            updateAnimalUI();
+        }
+
+        function toggleTimer() {
+            ensureAudio();
+            if (isTimerRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (timerSeconds <= 0) timerSeconds = 5 * 60;
+            isTimerRunning = true;
+            isAnimalAwake = false;
+            updateAnimalUI();
+
+            const btn = document.getElementById('timerToggleBtn');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="pause" class="w-3.5 h-3.5 fill-current"></i><span>暫停計時</span>`;
+                btn.className = 'cute-btn flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black py-1 px-2.5 rounded-xl shadow-2xs flex items-center justify-center gap-1 text-xs sm:text-sm cursor-pointer';
+                lucide.createIcons();
+            }
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    pauseTimer();
+                    playDingSound();
+                    showToast('⏰ 時間到囉！小朋友做得真棒！');
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            const btn = document.getElementById('timerToggleBtn');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i><span>開始計時</span>`;
+                btn.className = 'cute-btn flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black py-1 px-2.5 rounded-xl shadow-2xs flex items-center justify-center gap-1 text-xs sm:text-sm cursor-pointer';
+                lucide.createIcons();
+            }
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timerSeconds = 5 * 60;
+            isAnimalAwake = false;
+            updateAnimalUI();
+        }
+
+        // 吵醒小動物處理
+        let wakeModalCooldown = false;
+        function triggerAnimalWakeUp() {
+            if (wakeModalCooldown) return;
+            wakeModalCooldown = true;
+            setTimeout(() => { wakeModalCooldown = false; }, 1200);
+
+            isAnimalAwake = true;
+            updateAnimalUI();
+            playWakeAlertSound();
+
+            const modal = document.getElementById('wakeUpModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function dismissWakeUpModal() {
+            closeModal('wakeUpModal');
+            isAnimalAwake = false;
+            updateAnimalUI();
+        }
+
+        function confirmWakeUpPenalty() {
+            closeModal('wakeUpModal');
+            batchAdjustPoints(-1);
+            isAnimalAwake = false;
+            updateAnimalUI();
+        }
+
+        // ==================== 5. 麥克風音量偵測 ====================
+        let micStream = null;
+        let micContext = null;
+        let micAnalyser = null;
+        let micRafId = null;
+        let isMicActive = false;
+
+        function updateSensitivity(val) {
+            appData.sensitivity = Number(val);
+            const marker = document.getElementById('thresholdMarker');
+            if (marker) marker.style.left = `${appData.sensitivity}%`;
+            saveData();
+        }
+
+        async function toggleMicrophone() {
+            if (isMicActive) {
+                stopMicrophone();
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('此瀏覽器不支援麥克風偵測');
+                return;
+            }
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                micContext = new AudioCtx();
+                const source = micContext.createMediaStreamSource(micStream);
+                micAnalyser = micContext.createAnalyser();
+                micAnalyser.fftSize = 256;
+                source.connect(micAnalyser);
+
+                isMicActive = true;
+                const btnText = document.getElementById('micBtnText');
+                if (btnText) btnText.textContent = '偵測中...';
+
+                const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+                function monitorVolume() {
+                    if (!isMicActive || !micAnalyser) return;
+                    micAnalyser.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                    const avg = sum / dataArray.length;
+                    const percent = Math.min(100, Math.round((avg / 128) * 100));
+
+                    const bar = document.getElementById('volumeBar');
+                    if (bar) {
+                        bar.style.width = `${percent}%`;
+                        bar.className = `h-full rounded-full transition-all duration-75 ${
+                            percent >= appData.sensitivity ? 'bg-rose-500' : percent >= appData.sensitivity * 0.7 ? 'bg-amber-400' : 'bg-emerald-400'
+                        }`;
+                    }
+
+                    if (isTimerRunning && percent >= appData.sensitivity) {
+                        triggerAnimalWakeUp();
+                    }
+
+                    micRafId = requestAnimationFrame(monitorVolume);
+                }
+                monitorVolume();
+            } catch (err) {
+                console.error('無法開啟麥克風:', err);
+                showToast('無法開啟麥克風，請確認權限設定');
+            }
+        }
+
+        function stopMicrophone() {
+            isMicActive = false;
+            if (micRafId) cancelAnimationFrame(micRafId);
+            if (micStream) {
+                micStream.getTracks().forEach(t => t.stop());
+                micStream = null;
+            }
+            if (micContext) {
+                micContext.close().catch(() => {});
+                micContext = null;
+            }
+            const bar = document.getElementById('volumeBar');
+            if (bar) {
+                bar.style.width = '5%';
+                bar.className = 'h-full rounded-full bg-emerald-400 transition-all duration-75';
+            }
+            const btnText = document.getElementById('micBtnText');
+            if (btnText) btnText.textContent = '麥克風偵測';
+        }
+
+        // ==================== 6. 今日任務清單與「現在要做的事」 ====================
+        function renderFocusTask() {
+            const focusEl = document.getElementById('currentFocusTaskDisplay');
+            if (!focusEl) return;
+            const activeTask = (appData.tasks || []).find(t => t.id === appData.activeTaskId) || (appData.tasks || [])[0];
+            if (!activeTask) {
+                focusEl.innerHTML = `<span class="text-amber-700/70 text-sm">請在下方新增今日任務</span>`;
+                return;
+            }
+            appData.activeTaskId = activeTask.id;
+            focusEl.innerHTML = toZhuyinHtml(activeTask.text);
+        }
+
+        function setFocusTask(taskId) {
+            appData.activeTaskId = taskId;
+            saveData();
+            renderFocusTask();
+            renderTasks();
+        }
+
+        function renderTasks() {
+            renderFocusTask();
+            const container = document.getElementById('taskListContainer');
+            if (!container) return;
+
+            const tasks = appData.tasks || [];
+            if (tasks.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs font-bold text-stone-400 py-4">還沒有任務，快新增一項吧！</div>`;
+                return;
+            }
+
+            container.innerHTML = tasks.map((task, idx) => {
+                const isSelected = task.id === appData.activeTaskId;
+                return `
+                    <div onclick="setFocusTask('${task.id}')" class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl border-2 cursor-pointer transition ${
+                        isSelected
+                            ? 'bg-amber-100/90 border-amber-500 shadow-2xs'
+                            : 'bg-amber-50/40 border-amber-200/80 hover:border-amber-400'
+                    }">
+                        <div class="flex items-center gap-2 min-w-0 font-black text-amber-950 text-sm">
+                            <span class="w-5 h-5 rounded-full ${isSelected ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'} text-xs flex items-center justify-center shrink-0">
+                                ${idx + 1}
+                            </span>
+                            <span class="truncate leading-snug">${toZhuyinHtml(task.text)}</span>
+                        </div>
+                        <button type="button" onclick="event.stopPropagation(); deleteTask('${task.id}')" class="text-stone-400 hover:text-rose-500 p-0.5 rounded cursor-pointer shrink-0" title="刪除任務">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('newTaskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const newTask = { id: 't_' + Date.now(), text };
+            appData.tasks.push(newTask);
+            appData.activeTaskId = newTask.id;
+            input.value = '';
+            saveData();
+            renderTasks();
+            renderStudents();
+        }
+
+        function quickAddTask(text) {
+            const newTask = { id: 't_' + Date.now() + '_' + Math.floor(Math.random() * 100), text };
+            appData.tasks.push(newTask);
+            appData.activeTaskId = newTask.id;
+            saveData();
+            renderTasks();
+            renderStudents();
+            playDingSound();
+        }
+
+        function deleteTask(taskId) {
+            appData.tasks = appData.tasks.filter(t => t.id !== taskId);
+            if (appData.activeTaskId === taskId) {
+                appData.activeTaskId = appData.tasks[0]?.id || null;
+            }
+            appData.students.forEach(s => {
+                s.completedTasks = (s.completedTasks || []).filter(id => id !== taskId);
+            });
+            saveData();
+            renderTasks();
+            renderStudents();
+        }
+
+        // ==================== 7. 小朋友姓名打卡、動物養成與個人加分 ====================
+        function renderStudents() {
+            const grid = document.getElementById('studentsGrid');
+            if (!grid) return;
+
+            const students = appData.students || [];
+            const tasks = appData.tasks || [];
+            const validTaskIds = new Set(tasks.map(t => t.id));
+
+            let allDoneStudentsCount = 0;
+
+            grid.innerHTML = students.map(student => {
+                const doneIds = new Set((student.completedTasks || []).filter(id => validTaskIds.has(id)));
+                const doneCount = doneIds.size;
+                const totalCount = tasks.length;
+                const isAllDone = totalCount > 0 && doneCount >= totalCount;
+                if (isAllDone) allDoneStudentsCount++;
+
+                const pet = getPetEvolutionInfo(student);
+                const progressPct = pet.nextPts ? Math.min(100, Math.round(((student.points || 0) / pet.nextPts) * 100)) : 100;
+
+                return `
+                    <div onclick="openStudentDetailModal('${student.id}')" class="cute-btn rounded-2xl border-2 p-2 flex flex-col items-center justify-between cursor-pointer transition ${
+                        isAllDone
+                            ? 'bg-emerald-50 border-emerald-400 shadow-2xs'
+                            : 'bg-white border-amber-200 hover:border-amber-400'
+                    }">
+                        <!-- 頂部：任務完成進度徽章 -->
+                        <div class="w-full flex items-center justify-between text-[10px] font-black mb-0.5">
+                            <span class="px-1.5 py-0.2 rounded-full ${isAllDone ? 'bg-emerald-500 text-white' : 'bg-amber-100 text-amber-800'}">
+                                ${isAllDone ? '✅ 全完' : `${doneCount}/${totalCount}`}
+                            </span>
+                            <span class="text-amber-600">⭐${student.points || 0}</span>
+                        </div>
+
+                        <!-- 養成動物頭貼 -->
+                        <div class="text-3xl sm:text-4xl my-0.5 select-none leading-none">${pet.emoji}</div>
+
+                        <!-- 小朋友姓名（附注音） -->
+                        <div class="font-black text-stone-800 text-xs sm:text-sm truncate max-w-full my-0.5 leading-tight">
+                            ${toZhuyinHtml(student.name)}
+                        </div>
+
+                        <!-- 進化進度條 -->
+                        <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden my-1 border border-stone-200/80">
+                            <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300" style="width: ${progressPct}%;"></div>
+                        </div>
+
+                        <!-- 單人快速加減分按鈕 -->
+                        <div class="w-full flex items-center justify-between gap-1 pt-0.5" onclick="event.stopPropagation()">
+                            <button type="button" onclick="adjustStudentPoints('${student.id}', -1)" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-xs py-0.5 rounded-lg cursor-pointer">-1</button>
+                            <button type="button" onclick="adjustStudentPoints('${student.id}', 1)" class="flex-1 bg-amber-300 hover:bg-amber-400 text-amber-950 font-black text-xs py-0.5 rounded-lg cursor-pointer">+1</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const checkedCountEl = document.getElementById('checkedInCount');
+            const totalCountEl = document.getElementById('totalStudentsCount');
+            if (checkedCountEl) checkedCountEl.textContent = allDoneStudentsCount;
+            if (totalCountEl) totalCountEl.textContent = students.length;
+        }
+
+        function adjustStudentPoints(studentId, delta) {
+            const student = (appData.students || []).find(s => s.id === studentId);
+            if (!student) return;
+
+            const oldPet = getPetEvolutionInfo(student);
+            student.points = Math.max(0, (student.points || 0) + delta);
+            const newPet = getPetEvolutionInfo(student);
+
+            saveData();
+            renderStudents();
+            if (activeDetailStudentId === studentId) {
+                renderStudentDetailModal();
+            }
+
+            if (delta > 0) {
+                if (newPet.level > oldPet.level) {
+                    playDingSound();
+                    showToast(`🎉 太棒了！${student.name} 進化成 ${newPet.emoji} ${newPet.stageLabel}！`);
+                } else {
+                    playStarSound();
+                }
+            }
+        }
+
+        function batchAdjustPoints(delta) {
+            (appData.students || []).forEach(s => {
+                s.points = Math.max(0, (s.points || 0) + delta);
+            });
+            saveData();
+            renderStudents();
+            if (delta > 0) {
+                playStarSound();
+                showToast('⭐ 全班都加了 1 顆星星！');
+            } else {
+                showToast('全班各扣了 1 顆星星');
+            }
+        }
+
+        function resetAllCheckins() {
+            (appData.students || []).forEach(s => {
+                s.completedTasks = [];
+            });
+            saveData();
+            renderStudents();
+            showToast('🔄 已重設全班今日打卡');
+        }
+
+        function openStudentDetailModal(studentId) {
+            activeDetailStudentId = studentId;
+            renderStudentDetailModal();
+            const modal = document.getElementById('studentDetailModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                lucide.createIcons();
+            }
+        }
+
+        function renderStudentDetailModal() {
+            const student = (appData.students || []).find(s => s.id === activeDetailStudentId);
+            if (!student) return;
+
+            const pet = getPetEvolutionInfo(student);
+            const avatarEl = document.getElementById('detailPetAvatar');
+            const nameEl = document.getElementById('detailStudentName');
+            const stageEl = document.getElementById('detailPetStageName');
+            const ptsEl = document.getElementById('detailStudentPoints');
+            const trackEl = document.getElementById('detailPetTrack');
+            const hintEl = document.getElementById('detailPetNextHint');
+            const listEl = document.getElementById('detailTaskList');
+
+            if (avatarEl) avatarEl.textContent = pet.emoji;
+            if (nameEl) nameEl.innerHTML = toZhuyinHtml(student.name);
+            if (stageEl) stageEl.textContent = `${pet.stageLabel}（Lv.${pet.level + 1}）`;
+            if (ptsEl) ptsEl.textContent = student.points || 0;
+
+            if (trackEl) {
+                trackEl.innerHTML = pet.track.stages.map((emoji, idx) => {
+                    const unlocked = idx <= pet.level;
+                    return `<span class="${unlocked ? 'scale-110' : 'opacity-30 grayscale'} transition">${emoji}</span>`;
+                }).join('<span class="text-amber-300 text-xs">➔</span>');
+            }
+
+            if (hintEl) {
+                if (pet.nextPts) {
+                    hintEl.textContent = `再集滿 ${pet.ptsNeeded} 顆星星（共 ${pet.nextPts} 顆）就會進化喔！`;
+                } else {
+                    hintEl.textContent = '👑 已經達到最高等級的傳說神獸囉！';
+                }
+            }
+
+            if (listEl) {
+                const tasks = appData.tasks || [];
+                const doneSet = new Set(student.completedTasks || []);
+                if (tasks.length === 0) {
+                    listEl.innerHTML = `<div class="text-center text-sm font-bold text-stone-400 py-4">目前沒有今日任務</div>`;
+                } else {
+                    listEl.innerHTML = tasks.map(task => {
+                        const isDone = doneSet.has(task.id);
+                        return `
+                            <button type="button" onclick="toggleStudentTask('${student.id}', '${task.id}')" class="w-full flex items-center justify-between gap-2 p-3 rounded-2xl border-2 text-left transition cursor-pointer ${
+                                isDone
+                                    ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
+                                    : 'bg-rose-50/70 border-rose-200 hover:border-rose-400 text-stone-800'
+                            }">
+                                <div class="flex items-center gap-2.5 font-black text-base">
+                                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
+                                        isDone ? 'bg-emerald-500 text-white' : 'bg-white border-2 border-rose-300 text-rose-500'
+                                    }">${isDone ? '✓' : ''}</span>
+                                    <span>${toZhuyinHtml(task.text)}</span>
+                                </div>
+                                <span class="text-xs font-black px-2 py-0.5 rounded-full shrink-0 ${
+                                    isDone ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'
+                                }">${isDone ? '已完成' : '+1 ⭐'}</span>
+                            </button>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        function toggleStudentTask(studentId, taskId) {
+            const student = (appData.students || []).find(s => s.id === studentId);
+            if (!student) return;
+
+            const doneList = Array.isArray(student.completedTasks) ? [...student.completedTasks] : [];
+            const idx = doneList.indexOf(taskId);
+            const oldPet = getPetEvolutionInfo(student);
+
+            if (idx >= 0) {
+                doneList.splice(idx, 1);
+                student.completedTasks = doneList;
+                student.points = Math.max(0, (student.points || 0) - 1);
+                saveData();
+                renderStudents();
+                renderStudentDetailModal();
+            } else {
+                doneList.push(taskId);
+                student.completedTasks = doneList;
+                student.points = (student.points || 0) + 1;
+                const newPet = getPetEvolutionInfo(student);
+                saveData();
+                renderStudents();
+                renderStudentDetailModal();
+
+                if (newPet.level > oldPet.level) {
+                    playDingSound();
+                    showToast(`🎉 恭喜 ${student.name} 完成任務並進化成 ${newPet.emoji}！`);
+                } else {
+                    playStarSound();
+                    showToast(`✅ ${student.name} 完成任務，自動 +1 顆星星！`);
+                }
+            }
+        }
+
+        function openNamesModal() {
+            const textarea = document.getElementById('namesTextarea');
+            if (textarea) {
+                textarea.value = (appData.students || []).map(s => s.name).join('\n');
+            }
+            const modal = document.getElementById('namesModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function saveNamesList() {
+            const textarea = document.getElementById('namesTextarea');
+            if (!textarea) return;
+            const rawLines = textarea.value.split(/[\n,、]+/).map(n => n.trim()).filter(Boolean);
+            if (rawLines.length === 0) {
+                showToast('請至少輸入一位小朋友的名字');
+                return;
+            }
+
+            const existingByName = new Map((appData.students || []).map(s => [s.name, s]));
+            appData.students = rawLines.map((name, idx) => {
+                const prev = existingByName.get(name);
+                if (prev) return prev;
+                return {
+                    id: 's_' + Date.now() + '_' + idx,
+                    name,
+                    petTrackIndex: idx % PET_TRACKS.length,
+                    completedTasks: [],
+                    points: 0
+                };
+            });
+
+            saveData();
+            closeModal('namesModal');
+            renderStudents();
+            showToast(`✅ 已更新全班 ${appData.students.length} 位小朋友名單！`);
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingClassInput').value = appData.className;
+            document.getElementById('settingSoundCheckbox').checked = appData.soundEnabled;
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function saveSettings() {
+            const newName = document.getElementById('settingClassInput').value.trim();
+            if (newName) appData.className = newName;
+            appData.soundEnabled = document.getElementById('settingSoundCheckbox').checked;
+            saveData();
+            closeModal('settingsModal');
+            renderHeader();
+            showToast('設定已儲存！');
+        }
+
+        function resetAllScores() {
+            appData.students.forEach(s => s.points = 0);
+            saveData();
+            renderStudents();
+            closeModal('settingsModal');
+            showToast('已將全班星星分數歸零');
+        }
+
+        function restoreDemo() {
+            appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            saveData();
+            closeModal('settingsModal');
+            initApp();
+            showToast('已恢復範例名單與資料');
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // ==================== 7B. 匯出功能（CSV 報表 / JSON 備份 / 文字摘要） ====================
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function buildExportRows() {
+            const tasks = appData.tasks || [];
+            return (appData.students || []).map(student => {
+                const doneIds = new Set((student.completedTasks || []).filter(tid => tasks.some(t => t.id === tid)));
+                const doneTitles = tasks.filter(t => doneIds.has(t.id)).map(t => t.text);
+                const todoTitles = tasks.filter(t => !doneIds.has(t.id)).map(t => t.text);
+                const pet = getPetEvolutionInfo(student);
+
+                return {
+                    name: student.name,
+                    points: student.points || 0,
+                    level: `Lv.${pet.level + 1}`,
+                    petStage: `${pet.emoji} ${pet.stageLabel}`,
+                    completedCount: doneTitles.length,
+                    totalTasks: tasks.length,
+                    completedTasksText: doneTitles.join('、') || '無',
+                    pendingTasksText: todoTitles.join('、') || '全部完成'
+                };
+            });
+        }
+
+        function triggerFileDownload(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function exportToCsv() {
+            const rows = buildExportRows();
+            const headers = ['姓名', '星星分數', '養成等級', '動物階段', '已完成數', '任務總數', '已完成任務', '尚未完成任務'];
+            const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+            const csvLines = [
+                headers.map(escapeCsv).join(','),
+                ...rows.map(r => [
+                    r.name,
+                    r.points,
+                    r.level,
+                    r.petStage,
+                    r.completedCount,
+                    r.totalTasks,
+                    r.completedTasksText,
+                    r.pendingTasksText
+                ].map(escapeCsv).join(','))
+            ];
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            // 加上 BOM (\uFEFF) 讓台灣 Excel 開啟繁體中文不會亂碼
+            triggerFileDownload('\uFEFF' + csvLines.join('\r\n'), `${appData.className}_打卡與加分紀錄_${dateStr}.csv`, 'text/csv;charset=utf-8;');
+            closeModal('exportModal');
+            showToast('📊 已匯出 CSV 報表！');
+        }
+
+        function exportToJson() {
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const backupPayload = {
+                exportedAt: new Date().toISOString(),
+                data: appData
+            };
+            triggerFileDownload(JSON.stringify(backupPayload, null, 2), `${appData.className}_完整備份_${dateStr}.json`, 'application/json;charset=utf-8;');
+            closeModal('exportModal');
+            showToast('💾 已匯出完整 JSON 備份檔！');
+        }
+
+        function triggerJsonImportFile() {
+            const fileInput = document.getElementById('importJsonFileInput');
+            if (!fileInput) return;
+            fileInput.value = '';
+            fileInput.click();
+        }
+
+        function applyImportedBackupRaw(rawText) {
+            try {
+                const parsed = JSON.parse(rawText);
+                const candidateData = (parsed && typeof parsed === 'object' && parsed.data && typeof parsed.data === 'object')
+                    ? parsed.data
+                    : parsed;
+
+                if (!candidateData || typeof candidateData !== 'object') {
+                    showToast('備份格式不正確，請確認檔案內容');
+                    return;
+                }
+
+                const merged = {
+                    ...JSON.parse(JSON.stringify(DEFAULT_DATA)),
+                    ...candidateData,
+                    tasks: Array.isArray(candidateData.tasks) ? candidateData.tasks : [],
+                    students: Array.isArray(candidateData.students)
+                        ? candidateData.students.map((s, idx) => ({
+                            id: s.id || ('s_' + Date.now() + '_' + idx),
+                            name: String(s.name || `小朋友${idx + 1}`),
+                            petTrackIndex: typeof s.petTrackIndex === 'number' ? s.petTrackIndex : (idx % PET_TRACKS.length),
+                            completedTasks: Array.isArray(s.completedTasks) ? s.completedTasks : [],
+                            points: Math.max(0, Number(s.points) || 0)
+                        }))
+                        : []
+                };
+
+                appData = merged;
+                activeDetailStudentId = null;
+                saveData();
+                closeModal('exportModal');
+                initApp();
+                showToast('📥 已成功匯入並同步其他電腦的資料！');
+            } catch (err) {
+                console.error('匯入備份失敗:', err);
+                showToast('無法讀取備份檔，請確認是否為有效的 JSON 備份');
+            }
+        }
+
+        function handleImportJsonFile(event) {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target?.result;
+                if (typeof text === 'string') {
+                    applyImportedBackupRaw(text);
+                }
+            };
+            reader.onerror = () => {
+                showToast('讀取檔案時發生錯誤');
+            };
+            reader.readAsText(file, 'utf-8');
+        }
+
+        function handleImportFromText() {
+            const input = document.getElementById('pasteBackupTextarea');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) {
+                showToast('請先貼上備份文字');
+                return;
+            }
+            applyImportedBackupRaw(text);
+            input.value = '';
+        }
+
+        function copySummaryText() {
+            const rows = buildExportRows();
+            const lines = [
+                `🌟【${appData.className}】任務打卡與星星加分摘要`,
+                `今日任務：${(appData.tasks || []).map((t, i) => `${i + 1}.${t.text}`).join(' / ') || '無'}`,
+                `--------------------`
+            ];
+            rows.forEach(r => {
+                lines.push(`${r.petStage.split(' ')[0]} ${r.name}｜⭐${r.points}分｜任務 ${r.completedCount}/${r.totalTasks}（未完：${r.pendingTasksText}）`);
+            });
+
+            const text = lines.join('\n');
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+            } catch (e) {
+                console.error(e);
+            }
+            document.body.removeChild(textarea);
+            closeModal('exportModal');
+            showToast('📋 已複製文字摘要，可直接貼上！');
+        }
+
+        // ==================== 8. 輔助函式與初始化 ====================
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            const el = document.createElement('div');
+            el.className = 'bg-amber-950 text-amber-50 font-black px-5 py-2.5 rounded-2xl shadow-lg text-sm sm:text-base border-2 border-amber-400 transition-all duration-300';
+            el.textContent = msg;
+            box.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }, 2200);
+        }
+
+        function renderHeader() {
+            document.getElementById('classTitleDisplay').querySelector('span').textContent = appData.className;
+            const now = new Date();
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            document.getElementById('dateDisplay').textContent =
+                `民國 ${now.getFullYear() - 1911} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日（星期${weekDays[now.getDay()]}）`;
+        }
+
+        function initApp() {
+            renderHeader();
+            document.getElementById('sensitivitySlider').value = appData.sensitivity || 70;
+            document.getElementById('thresholdMarker').style.left = `${appData.sensitivity || 70}%`;
+            updateAnimalUI();
+            renderTasks();
+            renderStudents();
+            lucide.createIcons();
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
